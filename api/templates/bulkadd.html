@@ -1,0 +1,18 @@
+<h1>Bulk Add Problems from Contest</h1>
+<form method="post">
+  Contest Link: <input name="contestlink">
+  {% for p in problems %}
+    <div style="margin-bottom:20px;">
+      <b>{{ p.name }}</b> ({{ p.index }})<br>
+      <input type="hidden" name="index_{{ loop.index0 }}" value="{{ p.index }}">
+      <input type="hidden" name="name_{{ loop.index0 }}" value="{{ p.name }}">
+      <input type="hidden" name="link_{{ loop.index0 }}" value="https://codeforces.com/contest/{{ contestid }}/problem/{{ p.index }}">
+      Rating: <input name="rating_{{ loop.index0 }}" type="number"><br>
+      Quality: <input name="quality_{{ loop.index0 }}" type="number"><br>
+    </div>
+  {% endfor %}
+  <input type="hidden" name="count" value="{{ problems|length }}">
+  <input type="hidden" name="contestid" value="{{ contestid }}">
+  <input type="hidden" name="contestname" value="{{ contestname }}">
+  <button type="submit">Add All</button>
+</form>

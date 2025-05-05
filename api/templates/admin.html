@@ -1,0 +1,19 @@
+<h1>Admin Panel</h1>
+<form method="post">
+    <input name="name" placeholder="Problem Name"><br>
+    <input name="index" placeholder="Problem Index"><br>
+    <input name="contestlink" placeholder="Contest Link"><br>
+    <input name="contestname" placeholder="Contest Name"><br>
+    <input name="rating" type="number" placeholder="Rating"><br>
+    <input name="quality" type="number" placeholder="Quality"><br>
+    <input name="contestid" type="number" placeholder="Contest ID"><br>
+    <input name="addedtime" type="number" placeholder="Timestamp (leave blank for now)"><br>
+    <button type="submit">Add Problem</button>
+</form>
+<p><b>OR</b></p>
+<form method="post">
+    <input name="bulkcontestid" placeholder="Contest ID (to fetch problems)" required><br>
+    <button type="submit">Fetch Contest Problems</button>
+</form>
+<br>
+<a href="/admin/logout">Logout</a>

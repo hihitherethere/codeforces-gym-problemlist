@@ -2,64 +2,90 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>{{ handle }}'s ProblemSet</title>
+  <title>ProblemSet</title>
   <style>
     body {
       font-family: "Segoe UI", sans-serif;
-      background: #f5f5f5;
+      background: #f0f2f5;
       margin: 0;
+      padding: 0;
     }
 
-    h1 {
-      text-align: center;
-      margin-bottom: 1rem;
-      padding: 0 2rem;
+    #header {
+      background-color: #24292f;
+      padding: 0.25rem 1rem;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    #header h1 {
+      margin: 0;
+      font-size: 1.75rem;
+      white-space: nowrap;
     }
 
     form {
-      text-align: center;
-      margin-left: 2rem;
-      display: flex;
-      align-items: center;
+      flex-grow: 1;
+    }
+
+    input[type="text"] {
+      width: 250px;
+      padding: 0.5rem 0.8rem;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 2rem auto;
+      background-color: white;
+      border-radius: 6px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.08);
+      overflow-x: auto;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      background: white;
-      box-shadow: 0 0 8px rgba(0,0,0,0.1);
-      padding: 0 2rem;
-      margin-top: 2rem;
     }
 
     th, td {
       padding: 12px 16px;
-      border-bottom: 1px solid #ddd;
+      border-bottom: 1px solid #eee;
       text-align: left;
     }
 
     th {
-      background: #eee;
-      font-weight: bold;
+      background-color: #f6f8fa;
     }
 
     tr.solved {
-      background-color: #e6ffed;
+      background-color: #dcffe4;
     }
 
     .rating {
       font-weight: bold;
     }
 
-    .r800 { color: green; }
-    .r1200 { color: darkgreen; }
-    .r1400 { color: orange; }
-    .r1600 { color: orangered; }
-    .r1800, .r2000 { color: red; }
-    .r2200 { color: darkred; }
+    .r800 { color: grey; }
+    .r1000 { color: grey; }
+    .r1200 { color: green; }
+    .r1400 { color: darkcyan; }
+    .r1600 { color: blue; }
+    .r1800 { color: blue; }
+    .r2000 { color: purple; }
+    .r2200 { color: orange; }
+    .r2400 { color: darkorange; }
+    .r2600 { color: red; }
+    .r2800 { color: red; }
+    .r3000 { color: black; }
 
     a {
-      color: #007acc;
+      color: #0366d6;
       text-decoration: none;
     }
 
@@ -67,67 +93,49 @@
       text-decoration: underline;
     }
 
-    #nav {
-      background: black;
-      height: 4rem;
-      display: flex;
-      align-items: center;
-      padding-left: 1rem;
-    }
-
-    #title {
-      font-size: 2rem;
-      color: white;
-    }
-
-    button {
-      background: dimgrey;
-      border: none;
-      font-size: 1rem;
-      border-radius: 2px;
-    }
-
-    button:hover {
-      cursor: pointer;
-    }
-
-    #balls {
-      margin-left: 0.2rem;
+    .footer {
+      text-align: center;
+      margin: 2rem 0;
+      color: #999;
     }
   </style>
 </head>
 <body>
-  <div id="nav">
-    <div id="title">TITLE</div>
+  <div id="header">
+    <h1>Gym Problemset</h1>
     <form method="POST" action="/table">
-      <input name="handle" value="{{handle if handle else '' }}" placeholder="Enter handle..." required>
-      <button id="balls" type="submit">Go</button>
+      <input type="text" name="handle" value="{{ handle if handle else '' }}" placeholder="Enter Codeforces handle" required>
+      <!-- No button needed; submit on Enter -->
     </form>
   </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Problem</th>
-        <th>Rating</th>
-        <th>Contest</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for p, solved in problems %}
-      <tr class="{{ 'solved' if solved else '' }}">
-        <td>
-          <a href="{{ p[2] }}" target="_blank">{{ p[1] }}</a>
-        </td>
-        <td class="rating r{{ (p[5] or 800) // 200 * 200 }}">{{ p[4] or 'Unrated' }}</td>
-        <td>
-          {% if p[3] and p[4] %}
-          <p>{{ p[4] }}</p>
-          {% else %}N/A{% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="container">
+    <table>
+      <thead>
+        <tr>
+          <th>Problem</th>
+          <th>Rating</th>
+          <th>Contest</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p, solved in problems %}
+        <tr class="{{ 'solved' if solved else '' }}">
+          <td><a href="{{ p[2] }}" target="_blank">{{ p[1] }}</a></td>
+          <td class="rating r{{ p[7] // 200 * 200 if p[7] // 200 * 200 < 3000 else 3000}}">{{ p[7] or 'Unrated' }}</td>
+          <td>
+            {% if p[4] and p[3] %}
+            <a href="{{p[3]}}" target="_blank">{{ p[4] }}</a>
+            {% else %}<p>{{p[4]}}</p>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    Built with ❤️ for Codeforces practice
+  </div>
 </body>
 </html>

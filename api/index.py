@@ -12,14 +12,16 @@ app.secret_key = "super_secret_key"
 
 @app.route('/reset')
 def reset():
-    db.execute("DROP TABLE IF EXISTS PROBLEMSET")
+    # db.execute("DROP TABLE IF EXISTS PROBLEMSET")
     db.execute('''
-        CREATE TABLE PROBLEMSET (
+        CREATE TABLE IF NOT EXISTS PROBLEMSET (
             problemid INTEGER PRIMARY KEY NOT NULL,
             name STRING NOT NULL,
-            link STRING,
-            contestid INT,
-            contestname STRING,
+            link STRING NOT NULL,
+            contestlink STRING NOT NULL,
+            contestname STRING NOT NULL,
+            problemindex STRING NOT NULL,
+            contestid STRING NOT NULL,
             rating INT,
             quality INT,
             addedtime INT NOT NULL,
@@ -51,35 +53,81 @@ def admin_panel():
         return redirect('/admin/login')
 
     if request.method == 'POST':
-        name = request.form['name']
-        link = request.form['link']
-        contestname = request.form['contestname']
+        # Check if bulk add form is submitted
+        count = int(request.form.get('count', 0))
+        if count > 0:
+            contestlink = request.form.get('contestlink')
+            contestname = request.form.get('contestname')
+            contestid = request.form.get('contestid')
+
+            for i in range(count):
+                name = request.form.get(f'name_{i}')
+                index = request.form.get(f'index_{i}')
+                link = f"{contestlink}/problem/{index}"
+                rating = request.form.get(f'rating_{i}', None)
+                quality = request.form.get(f'quality_{i}', None)
+                addedtime = int(time.time())
+
+                db.execute('''
+                    INSERT INTO PROBLEMSET (name, link, contestlink, contestname, problemindex, contestid, rating, quality, addedtime)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (name, link, contestlink, contestname, index, contestid, rating, quality, addedtime))
+            conn.commit()
+            return redirect('/admin')
+
+        # Normal single problem add
+        name = request.form.get('name')
+        link = request.form.get('link')
+        contestlink = request.form.get('contestlink')
+        contestname = request.form.get('contestname')
         rating = request.form.get('rating', None)
         quality = request.form.get('quality', None)
-        contestid = request.form.get('contestid', None)
-        addedtime = int(request.form.get('addedtime', 0) or time.time())
+        index = request.form.get('index', '')
+        contestid = request.form.get('contestid')
+        bulkcontestid = request.form.get('bulkcontestid')
 
-        db.execute('''
-            INSERT INTO PROBLEMSET (name, link, contestname, rating, quality, addedtime, contestid)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        ''', (name, link, contestname, rating, quality, addedtime, contestid))
+        # If contestid is given but no name => fetch contest problems
+        if bulkcontestid:
+            try:
+                r = requests.get(f"https://codeforces.com/api/contest.standings?contestId={bulkcontestid}&from=1&count=10000")
+                data = r.json()
+                if data["status"] != "OK":
+                    return "Failed to fetch contest problems", 400
+
+                problems = data["result"]["problems"]
+                contestname = data["result"]["contest"]["name"]
+                return render_template("bulkadd.html", problems=problems, contestname=contestname, contestid=contestid)
+            except Exception as e:
+                return f"Error fetching contest problems: {e}", 500
+
+        # Build link if not given
+        if not link and contestlink and index:
+            link = f"{contestlink}/problem/{index}"
+
+        # Check if problem exists
+        db.execute("SELECT addedtime FROM PROBLEMSET WHERE contestid=? AND problemindex=?", (contestid, index))
+        row = db.fetchone()
+        print(contestid, index)
+        if row:
+            preserved_time = row[0]
+            db.execute('''
+                UPDATE PROBLEMSET
+                SET name=?, link=?, contestlink=?, contestname=?, rating=?, quality=?
+                WHERE contestid=? AND problemindex=?
+            ''', (name, link, contestlink, contestname, rating, quality, contestid, index))
+        else:
+            addedtime = int(time.time())
+            db.execute('''
+                INSERT INTO PROBLEMSET (name, link, contestlink, contestname, rating, quality, addedtime, problemindex, contestid)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (name, link, contestlink, contestname, rating, quality, addedtime, index, contestid))
+
         conn.commit()
 
-    return '''
-    <h1>Admin Panel</h1>
-    <form method="post">
-        <input name="name" placeholder="Problem Name" required><br>
-        <input name="link" placeholder="Problem Link"><br>
-        <input name="contestname" placeholder="Contest Name"><br>
-        <input name="rating" type="number" placeholder="Rating"><br>
-        <input name="quality" type="number" placeholder="Quality"><br>
-        <input name="contestid" type="number" placeholder="Contest ID"><br>
-        <input name="addedtime" type="number" placeholder="Timestamp (leave blank for now)"><br>
-        <button type="submit">Add Problem</button>
-    </form>
-    <br>
-    <a href="/admin/logout">Logout</a>
-    '''
+    return render_template("admin.html")
+
+
+
 
 @app.route('/')
 def index():
@@ -117,8 +165,10 @@ def user_problemset(handle=None):
     problem_list = []
     for p in problems:
         # assuming p[0]=index, p[8]=contestId
-        key = f'{p[3]}-{p[0]}'
+        key = f'{p[6]}-{p[5]}'
         is_solved = key in solved_keys
         problem_list.append((p, is_solved))
 
     return render_template("problemset.html", problems=problem_list, handle=handle)
+
+reset()
