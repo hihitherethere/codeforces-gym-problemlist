@@ -1,35 +1,11 @@
 from flask import Flask, render_template, redirect, session, request
 import uuid as uuidlib
 import requests
-import json
-import sqlite3
 import time
+from supabase_client import supabase
 
 app = Flask(__name__)
-conn = sqlite3.connect('user.db',check_same_thread=False)
-db = conn.cursor()
 app.secret_key = "super_secret_key"
-
-@app.route('/reset')
-def reset():
-    # db.execute("DROP TABLE IF EXISTS PROBLEMSET")
-    db.execute('''
-        CREATE TABLE IF NOT EXISTS PROBLEMSET (
-            problemid INTEGER PRIMARY KEY NOT NULL,
-            name STRING NOT NULL,
-            link STRING NOT NULL,
-            contestlink STRING NOT NULL,
-            contestname STRING NOT NULL,
-            problemindex STRING NOT NULL,
-            contestid STRING NOT NULL,
-            rating INT,
-            quality INT,
-            addedtime INT NOT NULL,
-            contesttime INT
-            )
-        ''')
-    conn.commit()
-    return redirect('/')
 
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
@@ -53,7 +29,6 @@ def admin_panel():
         return redirect('/admin/login')
 
     if request.method == 'POST':
-        # Check if bulk add form is submitted
         count = int(request.form.get('count', 0))
         if count > 0:
             contestlink = request.form.get('contestlink')
@@ -65,29 +40,32 @@ def admin_panel():
                 index = request.form.get(f'index_{i}')
                 link = f"{contestlink}/problem/{index}"
                 rating = request.form.get(f'rating_{i}', None)
-                quality = request.form.get(f'quality_{i}', None)
                 addedtime = int(time.time())
 
-                db.execute('''
-                    INSERT INTO PROBLEMSET (name, link, contestlink, contestname, problemindex, contestid, rating, quality, addedtime)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (name, link, contestlink, contestname, index, contestid, rating, quality, addedtime))
-            conn.commit()
+                supabase.table("PROBLEMSET").insert({
+                    "name": name,
+                    "link": link,
+                    "contestlink": contestlink,
+                    "contestname": contestname,
+                    "problemindex": index,
+                    "contestid": contestid,
+                    "rating": int(rating) if rating else None,
+                    "votes": 1,
+                    "addedtime": addedtime
+                }).execute()
             return redirect('/admin')
 
-        # Normal single problem add
         name = request.form.get('name')
         link = request.form.get('link')
         contestlink = request.form.get('contestlink')
         contestname = request.form.get('contestname')
         rating = request.form.get('rating', None)
-        quality = request.form.get('quality', None)
-        index = request.form.get('index', '')
+        index = request.form.get('index')
         contestid = request.form.get('contestid')
+        addtype = request.form.get('addtype')
         bulkcontestid = request.form.get('bulkcontestid')
 
-        # If contestid is given but no name => fetch contest problems
-        if bulkcontestid:
+        if addtype == "bulkadd":
             try:
                 r = requests.get(f"https://codeforces.com/api/contest.standings?contestId={bulkcontestid}&from=1&count=10000")
                 data = r.json()
@@ -96,38 +74,40 @@ def admin_panel():
 
                 problems = data["result"]["problems"]
                 contestname = data["result"]["contest"]["name"]
-                return render_template("bulkadd.html", problems=problems, contestname=contestname, contestid=contestid)
+                return render_template("bulkadd.html", problems=problems, contestname=contestname, contestid=bulkcontestid)
             except Exception as e:
                 return f"Error fetching contest problems: {e}", 500
 
-        # Build link if not given
         if not link and contestlink and index:
             link = f"{contestlink}/problem/{index}"
 
-        # Check if problem exists
-        db.execute("SELECT addedtime FROM PROBLEMSET WHERE contestid=? AND problemindex=?", (contestid, index))
-        row = db.fetchone()
-        print(contestid, index)
-        if row:
-            preserved_time = row[0]
-            db.execute('''
-                UPDATE PROBLEMSET
-                SET name=?, link=?, contestlink=?, contestname=?, rating=?, quality=?
-                WHERE contestid=? AND problemindex=?
-            ''', (name, link, contestlink, contestname, rating, quality, contestid, index))
-        else:
-            addedtime = int(time.time())
-            db.execute('''
-                INSERT INTO PROBLEMSET (name, link, contestlink, contestname, rating, quality, addedtime, problemindex, contestid)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (name, link, contestlink, contestname, rating, quality, addedtime, index, contestid))
+        existing = supabase.table("PROBLEMSET").select("*") \
+            .eq("contestid", contestid).eq("problemindex", index).execute().data
 
-        conn.commit()
+        if existing:
+            votes = existing[0]["votes"] + 1
+            supabase.table("PROBLEMSET").update({
+                "name": name,
+                "link": link,
+                "contestlink": contestlink,
+                "contestname": contestname,
+                "rating": int(rating) if rating else None,
+                "votes": votes
+            }).eq("contestid", contestid).eq("problemindex", index).execute()
+        else:
+            supabase.table("PROBLEMSET").insert({
+                "name": name,
+                "link": link,
+                "contestlink": contestlink,
+                "contestname": contestname,
+                "rating": int(rating) if rating else None,
+                "votes": 1,
+                "addedtime": int(time.time()),
+                "problemindex": index,
+                "contestid": contestid
+            }).execute()
 
     return render_template("admin.html")
-
-
-
 
 @app.route('/')
 def index():
@@ -137,19 +117,16 @@ def index():
 @app.route('/table', methods=['GET', 'POST'])
 def user_problemset(handle=None):
     if request.method == 'POST':
-        print("hi")
         handle = request.form.get('handle')
-        if handle == None:
-            return redirect('/table')
-        return redirect('/table/' + handle)
+        if handle:
+            return redirect('/table/' + handle)
+        return redirect('/table')
 
-    # Get solved problems from Codeforces API
     solved_keys = set()
 
-    if handle != None:
+    if handle:
         r = requests.get(f"https://codeforces.com/api/user.status?handle={handle}")
         data = r.json()
-
         if data["status"] == "OK":
             for sub in data["result"]:
                 if sub.get("verdict") == "OK":
@@ -157,18 +134,12 @@ def user_problemset(handle=None):
                     key = f'{prob.get("contestId")}-{prob.get("index")}'
                     solved_keys.add(key)
 
-    # Get problem list
-    db.execute("SELECT * FROM PROBLEMSET ORDER BY addedtime DESC")
-    problems = db.fetchall()
+    problems = supabase.table("PROBLEMSET").select("*").order("addedtime", desc=True).execute().data
 
-    # Pair each problem with its solved status
     problem_list = []
     for p in problems:
-        # assuming p[0]=index, p[8]=contestId
-        key = f'{p[6]}-{p[5]}'
+        key = f'{p["contestid"]}-{p["problemindex"]}'
         is_solved = key in solved_keys
         problem_list.append((p, is_solved))
 
     return render_template("problemset.html", problems=problem_list, handle=handle)
-
-reset()

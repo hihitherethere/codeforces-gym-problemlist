@@ -71,17 +71,13 @@
       font-weight: bold;
     }
 
-    .r800 { color: grey; }
-    .r1000 { color: grey; }
+    .r0 { color: grey; }
     .r1200 { color: green; }
     .r1400 { color: darkcyan; }
     .r1600 { color: blue; }
-    .r1800 { color: blue; }
-    .r2000 { color: purple; }
-    .r2200 { color: orange; }
-    .r2400 { color: darkorange; }
-    .r2600 { color: red; }
-    .r2800 { color: red; }
+    .r1900 { color: purple; }
+    .r2100 { color: orange; }
+    .r2400 { color: red; }
     .r3000 { color: black; }
 
     a {
@@ -122,7 +118,30 @@
         {% for p, solved in problems %}
         <tr class="{{ 'solved' if solved else '' }}">
           <td><a href="{{ p[2] }}" target="_blank">{{ p[1] }}</a></td>
-          <td class="rating r{{ p[7] // 200 * 200 if p[7] // 200 * 200 < 3000 else 3000}}">{{ p[7] or 'Unrated' }}</td>
+
+
+          {% if p[7] is not none %}
+              {% if p[7] < 1200 %}
+                  <td class="rating r0">{{ p[7] }}</td>
+              {% elif p[7] < 1400 %}
+                  <td class="rating r1200">{{ p[7] }}</td>
+              {% elif p[7] < 1600 %}
+                  <td class="rating r1400">{{ p[7] }}</td>
+              {% elif p[7] < 1900 %}
+                  <td class="rating r1600">{{ p[7] }}</td>
+              {% elif p[7] < 2100 %}
+                  <td class="rating r1900">{{ p[7] }}</td>
+              {% elif p[7] < 2400 %}
+                  <td class="rating r2100">{{ p[7] }}</td>
+              {% elif p[7] < 3000 %}
+                  <td class="rating r2400">{{ p[7] }}</td>
+              {% else %}
+                  <td class="rating r3000">{{ p[7] }}</td>
+              {% endif %}
+          {% else %}
+              <td class="rating">Unrated</td>
+          {% endif %}
+
           <td>
             {% if p[4] and p[3] %}
             <a href="{{p[3]}}" target="_blank">{{ p[4] }}</a>

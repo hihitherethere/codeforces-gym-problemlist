@@ -5,14 +5,15 @@
     <input name="contestlink" placeholder="Contest Link"><br>
     <input name="contestname" placeholder="Contest Name"><br>
     <input name="rating" type="number" placeholder="Rating"><br>
-    <input name="quality" type="number" placeholder="Quality"><br>
     <input name="contestid" type="number" placeholder="Contest ID"><br>
-    <input name="addedtime" type="number" placeholder="Timestamp (leave blank for now)"><br>
+    <input name="addtype" type="hidden" value="singleadd">
     <button type="submit">Add Problem</button>
 </form>
 <p><b>OR</b></p>
 <form method="post">
     <input name="bulkcontestid" placeholder="Contest ID (to fetch problems)" required><br>
+    <input name="singleadd" type="hidden">
+    <input name="addtype" type="hidden" value="bulkadd">
     <button type="submit">Fetch Contest Problems</button>
 </form>
 <br>
