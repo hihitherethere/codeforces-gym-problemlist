@@ -101,7 +101,6 @@
     <h1>Gym Problemset</h1>
     <form method="POST" action="/table">
       <input type="text" name="handle" value="{{ handle if handle else '' }}" placeholder="Enter Codeforces handle" required>
-      <!-- No button needed; submit on Enter -->
     </form>
   </div>
 
@@ -117,35 +116,36 @@
       <tbody>
         {% for p, solved in problems %}
         <tr class="{{ 'solved' if solved else '' }}">
-          <td><a href="{{ p[2] }}" target="_blank">{{ p[1] }}</a></td>
+          <td><a href="{{ p['link'] }}" target="_blank">{{ p['name'] }}</a></td>
 
-
-          {% if p[7] is not none %}
-              {% if p[7] < 1200 %}
-                  <td class="rating r0">{{ p[7] }}</td>
-              {% elif p[7] < 1400 %}
-                  <td class="rating r1200">{{ p[7] }}</td>
-              {% elif p[7] < 1600 %}
-                  <td class="rating r1400">{{ p[7] }}</td>
-              {% elif p[7] < 1900 %}
-                  <td class="rating r1600">{{ p[7] }}</td>
-              {% elif p[7] < 2100 %}
-                  <td class="rating r1900">{{ p[7] }}</td>
-              {% elif p[7] < 2400 %}
-                  <td class="rating r2100">{{ p[7] }}</td>
-              {% elif p[7] < 3000 %}
-                  <td class="rating r2400">{{ p[7] }}</td>
+          {% if p['rating'] is not none %}
+              {% if p['rating'] < 1200 %}
+                  <td class="rating r0">{{ p['rating'] }}</td>
+              {% elif p['rating'] < 1400 %}
+                  <td class="rating r1200">{{ p['rating'] }}</td>
+              {% elif p['rating'] < 1600 %}
+                  <td class="rating r1400">{{ p['rating'] }}</td>
+              {% elif p['rating'] < 1900 %}
+                  <td class="rating r1600">{{ p['rating'] }}</td>
+              {% elif p['rating'] < 2100 %}
+                  <td class="rating r1900">{{ p['rating'] }}</td>
+              {% elif p['rating'] < 2400 %}
+                  <td class="rating r2100">{{ p['rating'] }}</td>
+              {% elif p['rating'] < 3000 %}
+                  <td class="rating r2400">{{ p['rating'] }}</td>
               {% else %}
-                  <td class="rating r3000">{{ p[7] }}</td>
+                  <td class="rating r3000">{{ p['rating'] }}</td>
               {% endif %}
           {% else %}
               <td class="rating">Unrated</td>
           {% endif %}
 
           <td>
-            {% if p[4] and p[3] %}
-            <a href="{{p[3]}}" target="_blank">{{ p[4] }}</a>
-            {% else %}<p>{{p[4]}}</p>{% endif %}
+            {% if p['contestname'] and p['contestlink'] %}
+              <a href="{{ p['contestlink'] }}" target="_blank">{{ p['contestname'] }}</a>
+            {% else %}
+              <p>{{ p['contestname'] }}</p>
+            {% endif %}
           </td>
         </tr>
         {% endfor %}
