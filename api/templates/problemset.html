@@ -103,9 +103,12 @@
       color: #999;
     }
   </style>
+  <link rel="icon" type="image/png" href="/cfglogo.png">
+
 </head>
 <body>
   <div id="header">
+    <img src="/cfglogo.png" alt="Logo" style="height: 32px; margin-left: -10px; margin-right: -10px">
     <h1>Gym Problemset</h1>
     <form method="POST" action="/table">
       <input type="text" name="handle" value="{{ handle if handle else '' }}" placeholder="Enter Codeforces handle" required>

@@ -10,12 +10,12 @@ SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = Flask(__name__)
-app.secret_key = "super_secret_key"
+app.secret_key = "sdfafwefotijklwo"
 
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':
-        if request.form['username'] == 'a' and request.form['password'] == 'a':
+        if request.form['username'] == 'lunchboxisorz' and request.form['password'] == 'aba101':
             session['admin'] = True
             return redirect('/admin')
         else:
