@@ -128,6 +128,10 @@ def user_problemset(handle=None):
         return redirect('/table')
 
     solved_keys = set()
+    page = int(request.args.get("page", 1))
+    min_rating = request.args.get("min_rating", None, type=int)
+    max_rating = request.args.get("max_rating", None, type=int)
+    PAGE_SIZE = 100
 
     if handle:
         r = requests.get(f"https://codeforces.com/api/user.status?handle={handle}")
@@ -139,7 +143,16 @@ def user_problemset(handle=None):
                     key = f'{prob.get("contestId")}-{prob.get("index")}'
                     solved_keys.add(key)
 
-    problems = supabase.table("PROBLEMSET").select("*").order("addedtime", desc=True).execute().data
+    query = supabase.table("PROBLEMSET").select("*")
+
+    if min_rating is not None:
+        query = query.gte("rating", min_rating)
+    if max_rating is not None:
+        query = query.lte("rating", max_rating)
+
+    # Order and paginate
+    query = query.order("addedtime", desc=True).order("problemindex", desc=False).range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1)
+    problems = query.execute().data
 
     problem_list = []
     for p in problems:
@@ -147,4 +160,5 @@ def user_problemset(handle=None):
         is_solved = key in solved_keys
         problem_list.append((p, is_solved))
 
-    return render_template("problemset.html", problems=problem_list, handle=handle)
+    return render_template("problemset.html", problems=problem_list, handle=handle, page=page,
+                           min_rating=min_rating, max_rating=max_rating)

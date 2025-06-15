@@ -38,6 +38,14 @@
       border: 1px solid #ccc;
       box-sizing: border-box;
     }
+    input[type="number"] {
+      width: 125px;
+      padding: 0.5rem 0.8rem;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
 
     .container {
       max-width: 900px;
@@ -102,9 +110,17 @@
     <form method="POST" action="/table">
       <input type="text" name="handle" value="{{ handle if handle else '' }}" placeholder="Enter Codeforces handle" required>
     </form>
+    
+    
   </div>
 
+  
   <div class="container">
+    <form method="GET" action="/table{% if handle %}/{{ handle }}{% endif %}" style="display: flex; gap: 0.5rem;">
+      <input type="number" name="min_rating" value="{{ min_rating if min_rating is not none else '' }}" placeholder="Min Rating" min="0">
+      <input type="number" name="max_rating" value="{{ max_rating if max_rating is not none else '' }}" placeholder="Max Rating" min="0">
+      <button type="submit">Filter</button>
+    </form>
     <table>
       <thead>
         <tr>
@@ -151,6 +167,18 @@
         {% endfor %}
       </tbody>
     </table>
+  </div>
+
+  <div style="text-align: center; margin-top: 1rem;">
+    {% set next_page = page + 1 %}
+    {% set prev_page = page - 1 %}
+    {% if prev_page >= 1 %}
+      <a href="?page={{ prev_page }}{% if min_rating is not none %}&min_rating={{ min_rating }}{% endif %}{% if max_rating is not none %}&max_rating={{ max_rating }}{% endif %}" style="margin-right: 1rem;">Previous</a>
+    {% endif %}
+    <span>Page {{ page }}</span>
+    {% if problems|length == 100 %}
+      <a href="?page={{ next_page }}{% if min_rating is not none %}&min_rating={{ min_rating }}{% endif %}{% if max_rating is not none %}&max_rating={{ max_rating }}{% endif %}" style="margin-left: 1rem;">Next</a>
+    {% endif %}
   </div>
 
   <div class="footer">
