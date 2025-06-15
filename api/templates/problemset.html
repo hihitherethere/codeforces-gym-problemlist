@@ -122,7 +122,7 @@
     <form method="GET" action="/table{% if handle %}/{{ handle }}{% endif %}" style="display: flex; gap: 0.5rem;">
       <input type="number" name="min_rating" value="{{ min_rating if min_rating is not none else '' }}" placeholder="Min Rating" min="0">
       <input type="number" name="max_rating" value="{{ max_rating if max_rating is not none else '' }}" placeholder="Max Rating" min="0">
-      <button type="submit">Filter</button>
+      <button type="submit" style="color: white; border: 0px; border-radius: 6px; background-color: blue; text-align: center;">Filter</button>
     </form>
     <table>
       <thead>
