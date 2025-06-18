@@ -47,7 +47,7 @@ def admin_panel():
                 rating = request.form.get(f'rating_{i}', None)
                 addedtime = int(time.time())
 
-                supabase.table("PROBLEMSET").upsert({
+                supabase.table("PROBLEMSET").insert({
                     "name": name,
                     "link": link,
                     "contestlink": contestlink,
@@ -57,7 +57,7 @@ def admin_panel():
                     "rating": int(rating) if rating else None,
                     "votes": 1,
                     "addedtime": addedtime
-                }, on_conflict=["contestid", "problemindex"]).execute()
+                }).execute()
             return redirect('/admin')
 
         name = request.form.get('name')
