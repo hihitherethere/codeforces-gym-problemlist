@@ -4,20 +4,24 @@ import requests
 import time
 from supabase import create_client
 
-SUPABASE_URL = "https://msttguliwmsxrguzmjvx.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1zdHRndWxpd21zeHJndXptanZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc1NDg2MzksImV4cCI6MjA2MzEyNDYzOX0.bWTCdZj6AXQZAm6Zogud1IeO4qB7DTaRL9KHINJL774"
+SUPABASE_URL = os.environ["SUPABASE_URL"]
+SUPABASE_KEY = os.environ["SUPABASE_KEY"]
 
+ADMIN_USERNAME = os.environ["ADMIN_USERNAME"]
+ADMIN_PASSWORD = os.environ["ADMIN_PASSWORD"]
+
+FLASK_SECRET_KEY = os.environ["FLASK_SECRET_KEY"]
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = Flask(__name__)
-app.secret_key = "sdfafwefotijklwo"
+app.secret_key = FLASK_SECRET_KEY
 
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':
-        if request.form['username'] == 'lunchboxisorz' and request.form['password'] == 'aba101':
+        if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
             session['admin'] = True
-            return redirect('/admin')
+            return redirect("/admin")
         else:
             return "Invalid credentials", 403
     return '''
